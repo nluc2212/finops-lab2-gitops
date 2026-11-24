@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cust-alpha
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-health-degraded.ai-rca: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.ai-rca: ""
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  destination: { server: https://kubernetes.default.svc, namespace: cust-alpha }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+  source:
+    repoURL: git@github.com:nluc2212/finops-lab2-gitops.git
+    targetRevision: HEAD
+    path: cust-alpha

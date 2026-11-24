@@ -1,0 +1,179 @@
+fullnameOverride: kps
+
+alertmanager:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    enableRemoteWriteReceiver: true      # OTel Collector pushes spanmetrics here
+    enableFeatures: ["native-histograms"]
+    scrapeInterval: 30s
+    # pick up ServiceMonitors/PodMonitors from every namespace (redis-exporter, opencost, ...)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    resources:
+      requests: { cpu: 150m, memory: 600Mi }
+      limits: { cpu: "1", memory: 1500Mi }
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: managed-csi-shared   # tagged customer=shared (platform/storage)
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 8Gi
+
+prometheusOperator:
+  resources:
+    requests: { cpu: 30m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 200Mi }
+
+kube-state-metrics:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 200Mi }
+  metricLabelsAllowlist:
+    - namespaces=[customer]
+
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { cpu: 200m, memory: 100Mi }
+
+grafana:
+  adminUser: admin
+  adminPassword: finops
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+    smtp:            # host/user/password/from come from GF_SMTP_* in secret grafana-smtp
+      enabled: true
+      startTLS_policy: MandatoryStartTLS
+  resources:
+    requests: { cpu: 50m, memory: 150Mi }
+    limits: { cpu: 500m, memory: 400Mi }
+  envFromSecret: grafana-smtp      # GF_SMTP_* + GF_OPS_RECIPIENTS (scripts-lab2/write-secrets.sh)
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+    datasources:
+      defaultDatasourceEnabled: true
+      uid: prom
+  additionalDataSources:
+    - name: Tempo
+      uid: tempo
+      type: tempo
+      url: http://tempo.monitoring:3100
+      jsonData:
+        tracesToLogsV2: { datasourceUid: loki }
+        serviceMap: { datasourceUid: prom }
+    - name: Loki
+      uid: loki
+      type: loki
+      url: http://loki.monitoring:3100
+    - name: PostgreSQL
+      uid: pg
+      type: grafana-postgresql-datasource
+      url: postgres.finops:5432
+      user: finops
+      jsonData: { database: finops, sslmode: disable, postgresVersion: 1600 }
+      secureJsonData: { password: finops }
+
+  # Email 1 (immediate alert) + webhook to ai-rca (which sends email 2, the AI report). Lab2, spec §7.1.
+  alerting:
+    contactpoints.yaml:
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: ops-email
+          receivers:
+            - uid: ops-email
+              type: email
+              settings:
+                addresses: ${GF_OPS_RECIPIENTS}
+                singleEmail: true
+        - orgId: 1
+          name: ai-rca
+          receivers:
+            - uid: ai-rca
+              type: webhook
+              settings:
+                url: http://ai-rca.finops:8000/webhooks/grafana
+                httpMethod: POST
+    policies.yaml:
+      apiVersion: 1
+      policies:
+        - orgId: 1
+          receiver: ops-email
+          group_by: [alertname, service_name]
+          group_wait: 30s
+          group_interval: 2m
+          repeat_interval: 1h
+          routes:
+            - receiver: ai-rca
+              object_matchers: [["lab", "=", "lab2"]]
+              continue: true
+            - receiver: ops-email
+              object_matchers: [["lab", "=", "lab2"]]
+    rules.yaml:
+      apiVersion: 1
+      groups:
+        - orgId: 1
+          name: lab2-microservices
+          folder: FinOps lab2
+          interval: 1m
+          rules:
+            - uid: service-error-rate
+              title: service-error-rate
+              condition: C
+              for: 2m
+              labels: { lab: lab2, severity: warning }
+              annotations:
+                summary: "Tỉ lệ lỗi của service vượt 5% (xem label service_name). AI sẽ gửi report phân tích sau vài phút."
+              data:
+                - refId: A
+                  relativeTimeRange: { from: 300, to: 0 }
+                  datasourceUid: prom
+                  model:
+                    refId: A
+                    instant: true
+                    expr: >-
+                      sum by (service_name) (rate(traces_span_metrics_calls_total{status_code="STATUS_CODE_ERROR"}[2m]))
+                      / sum by (service_name) (rate(traces_span_metrics_calls_total[2m]))
+                - refId: C
+                  datasourceUid: __expr__
+                  model:
+                    refId: C
+                    type: threshold
+                    expression: A
+                    conditions: [{ evaluator: { type: gt, params: [0.05] } }]
+            - uid: service-error-logs
+              title: service-error-logs
+              condition: C
+              for: 1m
+              labels: { lab: lab2, severity: warning }
+              annotations:
+                summary: "Service ghi hơn 20 dòng log lỗi trong 5 phút (xem label service_name)."
+              data:
+                - refId: A
+                  relativeTimeRange: { from: 300, to: 0 }
+                  datasourceUid: loki
+                  model:
+                    refId: A
+                    queryType: instant
+                    expr: >-
+                      sum by (service_name) (label_replace(count_over_time({namespace=~"cust-alpha|cust-beta"}
+                      |~ "(?i)(error|exception|fatal)" [5m]), "service_name", "$1", "app", "(.*)"))
+                - refId: C
+                  datasourceUid: __expr__
+                  model:
+                    refId: C
+                    type: threshold
+                    expression: A
+                    conditions: [{ evaluator: { type: gt, params: [20] } }]

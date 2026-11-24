@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-loki
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    notifications.argoproj.io/subscribe.on-health-degraded.ai-rca: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.ai-rca: ""
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  destination: { server: https://kubernetes.default.svc, namespace: monitoring }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 7.6.0
+      helm:
+        releaseName: loki
+        valueFiles: [$values/platform/values/loki.yaml]
+    - repoURL: git@github.com:nluc2212/finops-lab2-gitops.git
+      targetRevision: HEAD
+      ref: values

@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opencost
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    notifications.argoproj.io/subscribe.on-health-degraded.ai-rca: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.ai-rca: ""
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  destination: { server: https://kubernetes.default.svc, namespace: monitoring }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+  sources:
+    - repoURL: https://opencost.github.io/opencost-helm-chart
+      chart: opencost
+      targetRevision: 2.5.34
+      helm:
+        releaseName: opencost
+        valueFiles: [$values/platform/values/opencost.yaml]
+    - repoURL: git@github.com:nluc2212/finops-lab2-gitops.git
+      targetRevision: HEAD
+      ref: values

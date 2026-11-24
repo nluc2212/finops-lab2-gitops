@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: ai-rca }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ai-rca } }
+  template:
+    metadata: { labels: { app: ai-rca } }
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: postgres:16
+          command: ["sh", "-c", "until pg_isready -h postgres.finops -p 5432; do sleep 2; done"]
+          resources: { requests: { cpu: 10m, memory: 16Mi }, limits: { cpu: 100m, memory: 64Mi } }
+      containers:
+        - name: ai-rca
+          image: finops-app
+          command: ["python", "-m", "finops.worker"]
+          envFrom: [{ secretRef: { name: finops-env } }]
+          env:
+            - { name: PG_DSN, value: "postgresql://finops:finops@postgres.finops:5432/finops" }
+            - { name: PROMETHEUS_URL, value: "http://kps-prometheus.monitoring:9090" }
+            - { name: TEMPO_URL, value: "http://tempo.monitoring:3100" }
+            - { name: LOKI_URL, value: "http://loki.monitoring:3100" }
+            - { name: ARGOCD_URL, value: "http://argocd-server.argocd" }
+            - { name: REPORT_BASE_URL, value: "http://localhost:8000" }
+          ports: [{ containerPort: 8000 }]
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, periodSeconds: 15 }
+          resources:
+            requests: { cpu: 30m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 384Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: ai-rca }
+spec:
+  selector: { app: ai-rca }
+  ports: [{ port: 8000, targetPort: 8000 }]

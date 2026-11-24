@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: bagisto-mysql }
+spec:
+  storageClassName: managed-csi-beta
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 8Gi } }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: bagisto-storage }
+spec:
+  storageClassName: managed-csi-beta
+  accessModes: ["ReadWriteOnce"]
+  resources: { requests: { storage: 4Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: bagisto, labels: { app: bagisto } }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: bagisto } }
+  template:
+    metadata: { labels: { app: bagisto } }
+    spec:
+      containers:
+        - name: bagisto
+          # webkul/bagisto:latest (pushed 2026-11-18) pinned by digest: the repository only publishes latest-* tags
+          image: webkul/bagisto@sha256:64d8f6e73c33a2201fa58492489d41ceddec33ad44ee42835fdf09179ffd081c
+          env:
+            - { name: APP_URL, value: "http://localhost:8081" }
+            - { name: APP_TIMEZONE, value: "Asia/Ho_Chi_Minh" }
+          ports: [{ containerPort: 80 }]
+          readinessProbe: { httpGet: { path: /, port: 80 }, initialDelaySeconds: 60, periodSeconds: 15, timeoutSeconds: 10 }
+          resources:
+            requests: { cpu: 200m, memory: 768Mi }
+            limits: { cpu: "1", memory: 1536Mi }
+          volumeMounts:
+            - { name: mysql, mountPath: /var/lib/mysql }
+            - { name: storage, mountPath: /var/www/bagisto/storage }
+      volumes:
+        - { name: mysql, persistentVolumeClaim: { claimName: bagisto-mysql } }
+        - { name: storage, persistentVolumeClaim: { claimName: bagisto-storage } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: bagisto }
+spec:
+  selector: { app: bagisto }
+  ports: [{ port: 80, targetPort: 80 }]

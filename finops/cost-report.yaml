@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: cost-report }
+spec:
+  schedule: "0 8 * * 1"          # Monday 08:00 Vietnam time
+  timeZone: Asia/Ho_Chi_Minh
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cost-report
+              image: finops-app
+              command: ["python", "-m", "finops.costreport"]
+              envFrom: [{ secretRef: { name: finops-env } }]
+              resources:
+                requests: { cpu: 20m, memory: 96Mi }
+                limits: { cpu: 300m, memory: 256Mi }

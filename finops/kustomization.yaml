@@ -1,0 +1,10 @@
+# ai-rca (incident analysis + webhooks + report email), cost-agent (chat), cost-report (weekly email), Postgres.
+# IMAGE is rewritten by scripts-lab2/gitops-sync.sh (ACR of the day + git sha). Secret finops-env: write-secrets.sh.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: finops
+resources: [namespace.yaml, postgres.yaml, ai-rca.yaml, cost-agent.yaml, cost-report.yaml]
+images:
+  - name: finops-app
+    newName: acrfinopslab288vzk.azurecr.io/finops-worker
+    newTag: 98c38be

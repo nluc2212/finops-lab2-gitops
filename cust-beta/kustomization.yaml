@@ -1,0 +1,5 @@
+# Customer beta: Bagisto (Laravel e-commerce; official single-container image with built-in MySQL 8) + load generator.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cust-beta
+resources: [namespace.yaml, bagisto.yaml, loadgen.yaml]

@@ -1,0 +1,39 @@
+# OpenCost: Kubernetes cost by namespace/pod. Custom pricing = Azure list price (Retail Prices API, 2026-11-17):
+# Standard_B2as_v2 Linux PAYG eastasia 0.105 USD/h, split CPU/RAM with OpenCost's default ratio (2 vCPU, 8 GB);
+# E4 LRS managed disk 2.4 USD/month (32 GB). Shown as "giá niêm yết – ước tính".
+fullnameOverride: opencost
+opencost:
+  prometheus:
+    internal:
+      enabled: false
+    external:
+      enabled: true
+      url: http://kps-prometheus.monitoring:9090
+  customPricing:
+    enabled: true
+    provider: custom
+    costModel:
+      description: "Azure list price eastasia Standard_B2as_v2 (estimate)"
+      CPU: "0.03418"
+      spotCPU: "0.03418"
+      RAM: "0.00458"
+      spotRAM: "0.00458"
+      GPU: "0"
+      storage: "0.000103"
+      zoneNetworkEgress: "0"
+      regionNetworkEgress: "0"
+      internetNetworkEgress: "0"
+  exporter:
+    defaultClusterId: aks-finops-b
+    resources:
+      requests: { cpu: 20m, memory: 96Mi }
+      limits: { cpu: 300m, memory: 400Mi }
+  metrics:
+    serviceMonitor:
+      enabled: true
+      additionalLabels: {}
+  ui:
+    enabled: true
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { cpu: 100m, memory: 128Mi }

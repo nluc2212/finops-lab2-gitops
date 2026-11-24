@@ -1,0 +1,15 @@
+fullnameOverride: tempo
+tempo:
+  retention: 48h
+  resources:
+    requests: { cpu: 50m, memory: 200Mi }
+    limits: { cpu: 500m, memory: 700Mi }
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: managed-csi-shared

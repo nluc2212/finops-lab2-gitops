@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: cost-agent }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: cost-agent } }
+  template:
+    metadata: { labels: { app: cost-agent } }
+    spec:
+      containers:
+        - name: cost-agent
+          image: finops-app
+          command: ["uvicorn", "finops.costagent.app:app", "--host", "0.0.0.0", "--port", "8000"]
+          envFrom: [{ secretRef: { name: finops-env } }]
+          ports: [{ containerPort: 8000 }]
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, periodSeconds: 15 }
+          resources:
+            requests: { cpu: 20m, memory: 96Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: cost-agent }
+spec:
+  selector: { app: cost-agent }
+  ports: [{ port: 8000, targetPort: 8000 }]

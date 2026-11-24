@@ -1,0 +1,55 @@
+fullnameOverride: otel-collector
+mode: deployment
+image:
+  repository: otel/opentelemetry-collector-contrib
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { cpu: 500m, memory: 400Mi }
+ports:
+  otlp: { enabled: true }
+  otlp-http: { enabled: true }
+  jaeger-compact: { enabled: false }
+  jaeger-thrift: { enabled: false }
+  jaeger-grpc: { enabled: false }
+  zipkin: { enabled: false }
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    prometheus: null
+  connectors:
+    # RED metrics per service from traces -> Prometheus (traces_span_metrics_*)
+    spanmetrics:
+      namespace: traces.span.metrics
+      histogram:
+        explicit:
+          buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s]
+      dimensions:
+        - name: rpc.service
+        - name: rpc.method
+        - name: http.route
+      metrics_flush_interval: 15s
+  processors:
+    batch: {}
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+  exporters:
+    otlp/tempo:
+      endpoint: tempo.monitoring:4317
+      tls: { insecure: true }
+    prometheusremotewrite:
+      endpoint: http://kps-prometheus.monitoring:9090/api/v1/write
+      resource_to_telemetry_conversion: { enabled: true }
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/tempo, spanmetrics]
+      metrics:
+        receivers: [spanmetrics]
+        processors: [batch]
+        exporters: [prometheusremotewrite]
+      logs: null
