@@ -15,3 +15,6 @@ patches:
       - op: replace
         path: /spec/type
         value: ClusterIP
+images:
+  - name: us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice
+    newTag: v0.10.8
