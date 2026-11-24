@@ -24,6 +24,22 @@ spec:
   template:
     metadata: { labels: { app: bagisto } }
     spec:
+      initContainers:
+        # the image ships a migrated+seeded MySQL and a prepared storage/ tree; an empty disk mounted on top would hide
+        # them, so copy them onto the volumes once (marker file), then the volumes keep the data across restarts
+        - name: seed-volumes
+          image: webkul/bagisto@sha256:64d8f6e73c33a2201fa58492489d41ceddec33ad44ee42835fdf09179ffd081c
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              if [ ! -f /seed/mysql/.seeded ]; then cp -a /var/lib/mysql/. /seed/mysql/ && touch /seed/mysql/.seeded; fi
+              if [ ! -f /seed/storage/.seeded ]; then cp -a /var/www/bagisto/storage/. /seed/storage/ && touch /seed/storage/.seeded; fi
+              echo seeded
+          volumeMounts:
+            - { name: mysql, mountPath: /seed/mysql }
+            - { name: storage, mountPath: /seed/storage }
+          resources: { requests: { cpu: 50m, memory: 64Mi }, limits: { cpu: 500m, memory: 256Mi } }
       containers:
         - name: bagisto
           # webkul/bagisto:latest (pushed 2026-11-18) pinned by digest: the repository only publishes latest-* tags
