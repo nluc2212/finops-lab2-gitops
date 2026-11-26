@@ -23,6 +23,3 @@ patches:
       - op: add
         path: /spec/progressDeadlineSeconds
         value: 120
-images:
-  - name: us-central1-docker.pkg.dev/online-boutique-ci/microservices-demo/paymentservice
-    newTag: v0.10.99
