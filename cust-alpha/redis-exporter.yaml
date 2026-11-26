@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-exporter
-  labels: { app: redis-exporter, lab2/note: tuning }
+  labels: { app: redis-exporter }
 spec:
   replicas: 1
   selector:
