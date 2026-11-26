@@ -20,7 +20,7 @@ spec:
           env:
             - { name: PG_DSN, value: "postgresql://finops:finops@postgres.finops:5432/finops" }
             - { name: PROMETHEUS_URL, value: "http://kps-prometheus.monitoring:9090" }
-            - { name: TEMPO_URL, value: "http://tempo.monitoring:3100" }
+            - { name: TEMPO_URL, value: "http://tempo.monitoring:3200" }
             - { name: LOKI_URL, value: "http://loki.monitoring:3100" }
             - { name: ARGOCD_URL, value: "http://argocd-server.argocd" }
             - { name: REPORT_BASE_URL, value: "http://localhost:8000" }
