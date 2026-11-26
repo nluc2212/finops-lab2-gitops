@@ -9,6 +9,14 @@ resources:
   - redis-exporter.yaml
   - ai-rca-rbac.yaml
 patches:
+  - target: { kind: Deployment, name: cartservice }
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 32Mi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 16Mi
   - path: patches/tracing.yaml
   - path: patches/loadgen.yaml
   - target: { kind: Service, name: frontend-external }
