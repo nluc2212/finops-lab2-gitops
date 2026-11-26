@@ -1,9 +1,9 @@
 fullnameOverride: tempo
 tempo:
-  retention: 48h
+  retention: 24h  # the lab is deleted every evening
   resources:
-    requests: { cpu: 50m, memory: 200Mi }
-    limits: { cpu: 500m, memory: 700Mi }
+    requests: { cpu: 100m, memory: 512Mi }
+    limits: { cpu: '1', memory: 2Gi }  # 700Mi was OOMKilled under trace search (26/11): AI got no traces
   receivers:
     otlp:
       protocols:

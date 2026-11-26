@@ -15,3 +15,10 @@ patches:
       - op: replace
         path: /spec/type
         value: ClusterIP
+  # a rollout that cannot finish (missing image, crash loop) is reported after 2 min instead of 10: Argo CD turns
+  # Degraded sooner, so the AI report of a bad deploy arrives ~4 min after the commit
+  - target: { kind: Deployment }
+    patch: |-
+      - op: add
+        path: /spec/progressDeadlineSeconds
+        value: 120
