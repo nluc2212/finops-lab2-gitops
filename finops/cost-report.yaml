@@ -10,6 +10,7 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 0  # a rerun would email again the customers already served
+      ttlSecondsAfterFinished: 86400  # finished jobs (scheduled or created by hand) and their pods go away after 1 day
       template:
         spec:
           restartPolicy: Never
