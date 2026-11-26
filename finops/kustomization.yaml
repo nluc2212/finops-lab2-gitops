@@ -6,5 +6,5 @@ namespace: finops
 resources: [namespace.yaml, postgres.yaml, ai-rca.yaml, cost-agent.yaml, cost-report.yaml]
 images:
   - name: finops-app
-    newName: acrfinopslab2brl6m.azurecr.io/finops-worker
-    newTag: 3cad05c
+    newName: acrfinopslab2lg9ae.azurecr.io/finops-worker
+    newTag: 5cb2f31
