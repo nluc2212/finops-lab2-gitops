@@ -7,6 +7,7 @@ resources:
   - namespace.yaml
   - upstream/kubernetes-manifests.yaml
   - redis-exporter.yaml
+  - ai-rca-rbac.yaml
 patches:
   - path: patches/tracing.yaml
   - path: patches/loadgen.yaml

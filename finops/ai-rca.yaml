@@ -7,6 +7,10 @@ spec:
   template:
     metadata: { labels: { app: ai-rca } }
     spec:
+      serviceAccountName: ai-rca
+      volumes:
+        - name: gitops-write-key   # write deploy key of the GitOps repo (scripts-lab2/write-secrets.sh)
+          secret: { secretName: gitops-write-key, defaultMode: 0400, optional: true }
       initContainers:
         - name: wait-postgres
           image: postgres:16
@@ -24,6 +28,9 @@ spec:
             - { name: LOKI_URL, value: "http://loki.monitoring:3100" }
             - { name: ARGOCD_URL, value: "http://argocd-server.argocd" }
             - { name: REPORT_BASE_URL, value: "http://localhost:8000" }
+            - { name: GITOPS_WRITE_URL, value: "git@github.com:nluc2212/finops-lab2-gitops.git" }
+            - { name: GITOPS_KEY_PATH, value: "/secrets/gitops/id" }
+          volumeMounts: [{ name: gitops-write-key, mountPath: /secrets/gitops, readOnly: true }]
           ports: [{ containerPort: 8000 }]
           readinessProbe: { httpGet: { path: /health, port: 8000 }, periodSeconds: 15 }
           resources:

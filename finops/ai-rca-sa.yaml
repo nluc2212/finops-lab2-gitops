@@ -1,0 +1,4 @@
+# Identity of the remediation bot; its rights are Roles in cust-alpha / cust-beta (ai-rca-rbac.yaml there).
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: ai-rca }

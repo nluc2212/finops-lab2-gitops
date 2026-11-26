@@ -13,7 +13,12 @@ spec:
   destination: { server: https://kubernetes.default.svc, namespace: cust-beta }
   syncPolicy:
     automated: { prune: true, selfHeal: true }
-    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+    syncOptions: [CreateNamespace=true, ServerSideApply=true, RespectIgnoreDifferences=true]
+  # the remediation bot scales / restarts deployments: not drift for selfHeal
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers: [/spec/replicas, /spec/template/metadata/annotations/kubectl.kubernetes.io~1restartedAt]
   source:
     repoURL: git@github.com:nluc2212/finops-lab2-gitops.git
     targetRevision: HEAD
