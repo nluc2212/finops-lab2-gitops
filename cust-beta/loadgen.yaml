@@ -1,4 +1,6 @@
 # Browses the storefront every minute so beta has real CPU usage and access/error logs.
+# Always exits 0: a storefront outage shows up in the logged status codes and Grafana alerts, not as a failed Job
+# (failedJobsHistoryLimit keeps a failed Job forever and Argo CD then shows cust-beta Degraded).
 apiVersion: batch/v1
 kind: CronJob
 metadata: { name: beta-loadgen }
@@ -20,7 +22,8 @@ spec:
               command: ["sh", "-c"]
               args:
                 - for i in $(seq 1 20); do for p in / /search?query=shirt /customer/login /checkout/cart; do
-                  curl -s -o /dev/null -w "%{http_code} $p\n" --max-time 20 http://bagisto.cust-beta$p; done; done
+                  curl -s -o /dev/null -w "%{http_code} $p\n" --max-time 20 http://bagisto.cust-beta$p; done; done;
+                  exit 0
               resources:
                 requests: { cpu: 10m, memory: 16Mi }
                 limits: { cpu: 100m, memory: 64Mi }
