@@ -5,7 +5,7 @@ spec:
   replicas: 1
   selector: { matchLabels: { app: ai-rca } }
   template:
-    metadata: { labels: { app: ai-rca } }
+    metadata: { labels: { app: ai-rca, azure.workload.identity/use: "true" } }
     spec:
       serviceAccountName: ai-rca
       volumes:
@@ -30,6 +30,7 @@ spec:
             - { name: REPORT_BASE_URL, value: "http://localhost:8000" }
             - { name: GITOPS_WRITE_URL, value: "git@github.com:nluc2212/finops-lab2-gitops.git" }
             - { name: GITOPS_KEY_PATH, value: "/secrets/gitops/id" }
+            - { name: WATCH_RESOURCE_GROUP, value: "ldtam" }
           volumeMounts: [{ name: gitops-write-key, mountPath: /secrets/gitops, readOnly: true }]
           ports: [{ containerPort: 8000 }]
           readinessProbe: { httpGet: { path: /health, port: 8000 }, periodSeconds: 15 }

@@ -3,8 +3,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: finops
-resources: [namespace.yaml, postgres.yaml, ai-rca-sa.yaml, ai-rca.yaml, cost-agent.yaml, cost-report.yaml]
+resources: [namespace.yaml, postgres.yaml, ai-rca-sa.yaml, ai-rca-maintenance-rbac.yaml, ai-rca.yaml, cost-agent.yaml, cost-report.yaml]
 images:
   - name: finops-app
     newName: acrfinopslab2m0rv5.azurecr.io/finops-worker
-    newTag: "1135980"  # quoted: an all-digit git sha (6009864) is a YAML number
+    newTag: "11d4d0a"  # quoted: an all-digit git sha (6009864) is a YAML number

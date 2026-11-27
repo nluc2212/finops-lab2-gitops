@@ -1,0 +1,17 @@
+# ai-rca reads the lab-maintenance flag (set by scripts-lab2/lifecycle.sh during down/up; NOT managed by Argo CD,
+# so selfHeal never removes it) to stay silent about the lab's own deletions. Read-only, one object.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: { name: ai-rca-maintenance }
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [lab-maintenance]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: { name: ai-rca-maintenance }
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: ai-rca-maintenance }
+subjects:
+  - { kind: ServiceAccount, name: ai-rca, namespace: finops }

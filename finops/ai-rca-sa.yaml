@@ -1,4 +1,8 @@
 # Identity of the remediation bot; its rights are Roles in cust-alpha / cust-beta (ai-rca-rbac.yaml there).
 apiVersion: v1
 kind: ServiceAccount
-metadata: { name: ai-rca }
+# Also the workload identity of the resource watch (Reader on RG ldtam, Terraform daily/ai-rca-identity.tf).
+metadata:
+  name: ai-rca
+  annotations:
+    azure.workload.identity/client-id: ac1dc489-43f4-48e2-ae84-306a243c3b50
