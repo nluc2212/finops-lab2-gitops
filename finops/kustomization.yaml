@@ -7,4 +7,4 @@ resources: [namespace.yaml, postgres.yaml, ai-rca-sa.yaml, ai-rca-maintenance-rb
 images:
   - name: finops-app
     newName: acrfinopslab2m0rv5.azurecr.io/finops-worker
-    newTag: "11d4d0a"  # quoted: an all-digit git sha (6009864) is a YAML number
+    newTag: "df963a2"  # quoted: an all-digit git sha (6009864) is a YAML number
