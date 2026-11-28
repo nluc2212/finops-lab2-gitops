@@ -5,4 +5,4 @@ kind: ServiceAccount
 metadata:
   name: ai-rca
   annotations:
-    azure.workload.identity/client-id: ac1dc489-43f4-48e2-ae84-306a243c3b50
+    azure.workload.identity/client-id: a3e7a86f-43d7-40de-b5f3-c9c34e477483
